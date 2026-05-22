@@ -7,9 +7,8 @@ import { eq } from 'drizzle-orm'
 import { createClient } from '@/lib/supabase/server'
 import { db } from '@/lib/db'
 import { profiles } from '@/lib/db/schema'
-import { getTrackUri } from '@/lib/spotify'
 
-export type FavoriteSong = { song: string; artist: string; trackUri: string | null }
+export type FavoriteSong = { song: string; artist: string; trackUri: string | null; albumArt: string | null }
 
 const onboardingSchema = z.object({
   username: z
@@ -122,17 +121,22 @@ export async function addFavoriteSong(
 
   const song = (formData.get('song') as string)?.trim()
   const artist = (formData.get('artist') as string)?.trim()
-  if (!song || !artist) return { error: 'Song and artist are required' }
+  const trackUri = (formData.get('trackUri') as string)?.trim() || null
+  const albumArt = (formData.get('albumArt') as string)?.trim() || null
+  if (!song || !artist) return { error: 'Select a song first' }
 
-  const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id)).limit(1)
+  const [profile] = await db
+    .select({ id: profiles.id, username: profiles.username, favoriteSongs: profiles.favoriteSongs })
+    .from(profiles)
+    .where(eq(profiles.id, user.id))
+    .limit(1)
   const existing = parseFavoriteSongs(profile?.favoriteSongs ?? null)
   if (existing.length >= 6) return { error: 'Maximum 6 favorite songs' }
-  if (existing.some((s) => s.song.toLowerCase() === song.toLowerCase() && s.artist.toLowerCase() === artist.toLowerCase())) {
+  if (existing.some((s) => s.trackUri === trackUri && trackUri)) {
     return { error: 'Already in your favorites' }
   }
 
-  const trackUri = await getTrackUri(song, artist).catch(() => null)
-  const updated = [...existing, { song, artist, trackUri }]
+  const updated = [...existing, { song, artist, trackUri, albumArt }]
 
   await db.update(profiles).set({ favoriteSongs: JSON.stringify(updated) }).where(eq(profiles.id, user.id))
   if (profile?.username) revalidatePath(`/u/${profile.username}`)

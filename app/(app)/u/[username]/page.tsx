@@ -185,7 +185,7 @@ export default async function UserProfilePage(props: {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {favoriteSongs.map((s, i) => (
-                <SpotifyTrack key={i} song={s.song} trackUri={s.trackUri} hue={hue} artist={s.artist} />
+                <SpotifyTrack key={i} song={s.song} trackUri={s.trackUri} hue={hue} artist={s.artist} albumArt={s.albumArt} />
               ))}
             </div>
           </section>

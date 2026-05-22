@@ -43,6 +43,40 @@ export async function getArtistImage(artist: string): Promise<string | null> {
   return images[1]?.url ?? images[0]?.url ?? null
 }
 
+export type SpotifyTrackResult = {
+  id: string
+  name: string
+  artist: string
+  albumArt: string | null
+  trackUri: string
+}
+
+export async function searchTracks(query: string, limit = 6): Promise<SpotifyTrackResult[]> {
+  const token = await getToken()
+  if (!token) return []
+
+  const res = await fetch(
+    `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=${limit}`,
+    { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 60 } }
+  )
+  if (!res.ok) return []
+
+  const data = await res.json()
+  const tracks: Record<string, unknown>[] = data.tracks?.items ?? []
+
+  return tracks.map((t) => {
+    const artists = t.artists as { name: string }[]
+    const album = t.album as { images: { url: string }[] }
+    return {
+      id: t.id as string,
+      name: t.name as string,
+      artist: artists[0]?.name ?? '',
+      albumArt: (album?.images?.[1]?.url ?? album?.images?.[0]?.url) ?? null,
+      trackUri: t.uri as string,
+    }
+  })
+}
+
 export async function getArtistImages(artists: string[]): Promise<Map<string, string>> {
   const map = new Map<string, string>()
   if (artists.length === 0) return map

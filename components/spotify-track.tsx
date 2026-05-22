@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { Music, ChevronDown, ChevronUp } from 'lucide-react'
 
 function SpotifyLogo({ className }: { className?: string }) {
@@ -16,10 +17,11 @@ type Props = {
   trackUri: string | null
   hue: number
   artist?: string
+  albumArt?: string | null
   compact?: boolean
 }
 
-export function SpotifyTrack({ song, trackUri, hue, artist, compact }: Props) {
+export function SpotifyTrack({ song, trackUri, hue, artist, albumArt, compact }: Props) {
   const [open, setOpen] = useState(false)
   const trackId = trackUri?.split(':')[2] ?? null // "spotify:track:{id}"
 
@@ -35,7 +37,17 @@ export function SpotifyTrack({ song, trackUri, hue, artist, compact }: Props) {
           cursor: trackId ? 'pointer' : 'default',
         }}
       >
-        <Music className="size-3.5 shrink-0 opacity-80" />
+        {albumArt ? (
+          <Image
+            src={albumArt}
+            alt={song}
+            width={28}
+            height={28}
+            className="size-7 rounded-md shrink-0 object-cover"
+          />
+        ) : (
+          <Music className="size-3.5 shrink-0 opacity-80" />
+        )}
         <span className="flex-1 truncate text-left">
           {song}
           {artist && <span className="opacity-60 font-normal"> · {artist}</span>}
