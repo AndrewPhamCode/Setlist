@@ -33,7 +33,7 @@ export async function getArtistImage(artist: string): Promise<string | null> {
 
   const res = await fetch(
     `https://api.spotify.com/v1/search?q=${encodeURIComponent(artist)}&type=artist&limit=1`,
-    { headers: { Authorization: `Bearer ${token}` } }
+    { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 3600 } }
   )
   if (!res.ok) return null
 

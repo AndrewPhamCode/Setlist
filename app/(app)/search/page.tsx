@@ -1,11 +1,10 @@
 import Link from 'next/link'
 import { ilike, or, desc, eq } from 'drizzle-orm'
-import { Search } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { db } from '@/lib/db'
 import { profiles, shows } from '@/lib/db/schema'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Input } from '@/components/ui/input'
+import { UserSearch } from '@/components/user-search'
 import { getInitials, formatDate } from '@/lib/utils'
 
 export default async function SearchPage(props: {
@@ -61,18 +60,7 @@ export default async function SearchPage(props: {
         </div>
       </div>
 
-      <form method="GET" action="/search">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <Input
-            name="q"
-            defaultValue={query}
-            placeholder="Search artists or usernames…"
-            className="pl-9"
-            autoFocus
-          />
-        </div>
-      </form>
+      <UserSearch defaultQuery={query} />
 
       {query && (
         <div className="space-y-8">
