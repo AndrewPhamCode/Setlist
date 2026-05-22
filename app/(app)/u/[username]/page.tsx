@@ -19,12 +19,30 @@ export default async function UserProfilePage(props: {
   const { username } = await props.params
 
   const [profile] = await db
-    .select()
+    .select({
+      id: profiles.id,
+      username: profiles.username,
+      displayName: profiles.displayName,
+      bio: profiles.bio,
+      createdAt: profiles.createdAt,
+    })
     .from(profiles)
     .where(eq(profiles.username, username))
     .limit(1)
 
   if (!profile) notFound()
+
+  let favoriteSongs: FavoriteSong[] = []
+  try {
+    const [fav] = await db
+      .select({ favoriteSongs: profiles.favoriteSongs })
+      .from(profiles)
+      .where(eq(profiles.username, username))
+      .limit(1)
+    favoriteSongs = JSON.parse(fav?.favoriteSongs ?? '[]')
+  } catch {
+    // column not yet migrated
+  }
 
   const [userShows, followerRows, followingRows] = await Promise.all([
     db
@@ -157,9 +175,7 @@ export default async function UserProfilePage(props: {
 
       {/* Favorite Songs */}
       {(() => {
-        let favSongs: FavoriteSong[] = []
-        try { favSongs = JSON.parse(profile.favoriteSongs ?? '[]') } catch {}
-        if (favSongs.length === 0) return null
+        if (favoriteSongs.length === 0) return null
         const hue = artistHue(username)
         return (
           <section className="space-y-3">
@@ -168,7 +184,7 @@ export default async function UserProfilePage(props: {
               <h2 className="text-lg font-black tracking-tight">Favorite Songs</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {favSongs.map((s, i) => (
+              {favoriteSongs.map((s, i) => (
                 <SpotifyTrack key={i} song={s.song} trackUri={s.trackUri} hue={hue} artist={s.artist} />
               ))}
             </div>

@@ -17,12 +17,29 @@ export default async function SettingsPage() {
   if (!user) redirect('/login')
 
   const [profile] = await db
-    .select()
+    .select({
+      id: profiles.id,
+      username: profiles.username,
+      displayName: profiles.displayName,
+      bio: profiles.bio,
+    })
     .from(profiles)
     .where(eq(profiles.id, user.id))
     .limit(1)
 
   if (!profile?.username) redirect('/onboarding')
+
+  let favoriteSongs: FavoriteSong[] = []
+  try {
+    const [fav] = await db
+      .select({ favoriteSongs: profiles.favoriteSongs })
+      .from(profiles)
+      .where(eq(profiles.id, user.id))
+      .limit(1)
+    favoriteSongs = JSON.parse(fav?.favoriteSongs ?? '[]')
+  } catch {
+    // column not yet migrated
+  }
 
   return (
     <div className="max-w-lg mx-auto space-y-8">
@@ -45,12 +62,7 @@ export default async function SettingsPage() {
 
       <section className="space-y-4">
         <h2 className="text-base font-semibold">Favorite Songs</h2>
-        <FavoriteSongsEditor
-          songs={(() => {
-            try { return JSON.parse(profile.favoriteSongs ?? '[]') as FavoriteSong[] }
-            catch { return [] }
-          })()}
-        />
+        <FavoriteSongsEditor songs={favoriteSongs} />
       </section>
 
       <Separator />
