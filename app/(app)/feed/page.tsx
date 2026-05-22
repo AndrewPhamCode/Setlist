@@ -30,6 +30,9 @@ export default async function FriendsFeedPage() {
             showDate: shows.showDate,
             rating: shows.rating,
             review: shows.review,
+            highlightSong: shows.highlightSong,
+            highlightTrackUri: shows.highlightTrackUri,
+            imageUrl: shows.imageUrl,
             createdAt: shows.createdAt,
             username: profiles.username,
             displayName: profiles.displayName,
@@ -68,16 +71,19 @@ export default async function FriendsFeedPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Following</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Shows from people you follow.
-        </p>
+      <div className="flex items-center gap-3">
+        <div className="w-1 h-9 rounded-full shrink-0" style={{ background: 'linear-gradient(180deg, oklch(0.72 0.26 290), oklch(0.60 0.28 315))' }} />
+        <div>
+          <h1 className="text-3xl font-black tracking-tight">Following</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">
+            Shows from people you follow.
+          </p>
+        </div>
       </div>
       {following.length === 0 ? (
         <div className="space-y-2">
           <p className="text-muted-foreground text-sm">
-            You're not following anyone yet.
+            You&apos;re not following anyone yet.
           </p>
           <Link href="/" className="text-sm text-primary hover:underline">
             Browse Discover to find people →
@@ -88,7 +94,7 @@ export default async function FriendsFeedPage() {
           No shows from people you follow yet.
         </p>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {friendShows.map((show) => (
             <ShowCard
               key={show.id}

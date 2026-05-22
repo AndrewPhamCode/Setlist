@@ -53,11 +53,12 @@ export default async function SearchPage(props: {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Search</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Find people and shows.
-        </p>
+      <div className="flex items-center gap-3">
+        <div className="w-1 h-9 rounded-full shrink-0" style={{ background: 'linear-gradient(180deg, oklch(0.72 0.26 290), oklch(0.60 0.28 315))' }} />
+        <div>
+          <h1 className="text-3xl font-black tracking-tight">Search</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">Find people and shows.</p>
+        </div>
       </div>
 
       <form method="GET" action="/search">

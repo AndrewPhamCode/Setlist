@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Music2, Compass, Rss, PlusCircle, Search, Settings } from 'lucide-react'
+import { Music2, Compass, Rss, PlusCircle, Search, Settings, CalendarDays } from 'lucide-react'
 import { eq } from 'drizzle-orm'
 import { createClient } from '@/lib/supabase/server'
 import { db } from '@/lib/db'
@@ -57,6 +57,13 @@ export async function Nav() {
               >
                 <Search className="size-4" />
                 <span className="hidden sm:inline">Search</span>
+              </Link>
+              <Link
+                href="/events"
+                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent"
+              >
+                <CalendarDays className="size-4" />
+                <span className="hidden sm:inline">Events</span>
               </Link>
               <Link
                 href="/shows/new"

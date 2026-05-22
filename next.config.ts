@@ -1,7 +1,13 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  /* config options here */
-};
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: 'i.scdn.co' },       // Spotify artist images
+      { protocol: 'https', hostname: '*.supabase.co' },   // Supabase storage
+      { protocol: 'https', hostname: 'mosaic.scdn.co' },  // Spotify mosaic images
+    ],
+  },
+}
 
-export default nextConfig;
+export default nextConfig

@@ -20,6 +20,9 @@ export default async function GlobalFeedPage() {
       showDate: shows.showDate,
       rating: shows.rating,
       review: shows.review,
+      highlightSong: shows.highlightSong,
+      highlightTrackUri: shows.highlightTrackUri,
+      imageUrl: shows.imageUrl,
       createdAt: shows.createdAt,
       username: profiles.username,
       displayName: profiles.displayName,
@@ -53,18 +56,21 @@ export default async function GlobalFeedPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Discover</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Every show logged on Setlist, newest first.
-        </p>
+      <div className="flex items-center gap-3">
+        <div className="w-1 h-9 rounded-full shrink-0" style={{ background: 'linear-gradient(180deg, oklch(0.72 0.26 290), oklch(0.60 0.28 315))' }} />
+        <div>
+          <h1 className="text-3xl font-black tracking-tight">Discover</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">
+            Every show logged on Setlist, newest first.
+          </p>
+        </div>
       </div>
       {allShows.length === 0 ? (
         <p className="text-muted-foreground text-sm">
           No shows yet — be the first to log one.
         </p>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {allShows.map((show) => (
             <ShowCard
               key={show.id}

@@ -31,6 +31,9 @@ export const shows = pgTable('shows', {
   showDate: date('show_date').notNull(),
   rating: smallint('rating').notNull(),
   review: text('review'),
+  highlightSong: varchar('highlight_song', { length: 200 }),
+  highlightTrackUri: varchar('highlight_track_uri', { length: 200 }),
+  imageUrl: text('image_url'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })
 

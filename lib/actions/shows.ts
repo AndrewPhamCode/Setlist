@@ -7,6 +7,7 @@ import { and, eq } from 'drizzle-orm'
 import { createClient } from '@/lib/supabase/server'
 import { db } from '@/lib/db'
 import { shows, profiles } from '@/lib/db/schema'
+import { getArtistImage, getTrackUri } from '@/lib/spotify'
 
 const showSchema = z.object({
   artist: z.string().min(1, 'Artist is required').max(200),
@@ -15,9 +16,26 @@ const showSchema = z.object({
   showDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date'),
   rating: z.coerce.number().int().min(1, 'Please select a rating').max(5),
   review: z.string().max(500).optional(),
+  highlightSong: z.string().max(200).optional(),
 })
 
 export type ShowState = { error: string | null }
+
+async function uploadImage(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  file: File
+): Promise<string | null> {
+  if (!file || file.size === 0 || !file.type.startsWith('image/')) return null
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+  const path = `${userId}/${crypto.randomUUID()}.${ext}`
+  const bytes = await file.arrayBuffer()
+  const { data, error } = await supabase.storage
+    .from('show-images')
+    .upload(path, bytes, { contentType: file.type })
+  if (error || !data) return null
+  return supabase.storage.from('show-images').getPublicUrl(path).data.publicUrl
+}
 
 export async function logShow(
   _prev: ShowState,
@@ -36,10 +54,19 @@ export async function logShow(
     showDate: formData.get('showDate'),
     rating: formData.get('rating'),
     review: formData.get('review') || undefined,
+    highlightSong: formData.get('highlightSong') || undefined,
   })
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
-  await db.insert(shows).values({ userId: user.id, ...parsed.data })
+  const imageFile = formData.get('image') as File
+  const uploadedUrl = await uploadImage(supabase, user.id, imageFile)
+  // Fall back to Spotify artist image if user didn't upload a photo
+  const imageUrl = uploadedUrl ?? (await getArtistImage(parsed.data.artist).catch(() => null))
+  const highlightTrackUri = parsed.data.highlightSong
+    ? await getTrackUri(parsed.data.highlightSong, parsed.data.artist).catch(() => null)
+    : null
+
+  await db.insert(shows).values({ userId: user.id, ...parsed.data, imageUrl, highlightTrackUri })
 
   revalidatePath('/')
   revalidatePath('/feed')
@@ -71,12 +98,25 @@ export async function editShow(
     showDate: formData.get('showDate'),
     rating: formData.get('rating'),
     review: formData.get('review') || undefined,
+    highlightSong: formData.get('highlightSong') || undefined,
   })
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
+  const imageFile = formData.get('image') as File
+  const existingImageUrl = formData.get('existingImageUrl') as string | null
+  const newUploadedUrl = await uploadImage(supabase, user.id, imageFile)
+  // Priority: new upload > existing > Spotify artist image
+  const imageUrl =
+    newUploadedUrl ??
+    existingImageUrl ??
+    (await getArtistImage(parsed.data.artist).catch(() => null))
+  const highlightTrackUri = parsed.data.highlightSong
+    ? await getTrackUri(parsed.data.highlightSong, parsed.data.artist).catch(() => null)
+    : null
+
   await db
     .update(shows)
-    .set(parsed.data)
+    .set({ ...parsed.data, imageUrl, highlightTrackUri })
     .where(and(eq(shows.id, showId), eq(shows.userId, user.id)))
 
   revalidatePath('/')

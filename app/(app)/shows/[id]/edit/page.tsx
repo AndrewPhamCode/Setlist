@@ -39,6 +39,8 @@ export default async function EditShowPage(props: {
           showDate: show.showDate,
           rating: show.rating,
           review: show.review,
+          highlightSong: show.highlightSong,
+          imageUrl: show.imageUrl,
         }}
       />
     </div>
