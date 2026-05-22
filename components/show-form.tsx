@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { StarRating } from '@/components/star-rating'
+import { ShowSearch } from '@/components/show-search'
 import { logShow, type ShowState } from '@/lib/actions/shows'
 
 const initialState: ShowState = { error: null }
@@ -23,6 +24,14 @@ export function ShowForm({ defaults }: { defaults?: Defaults }) {
   const [preview, setPreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const [artist, setArtist] = useState(defaults?.artist ?? '')
+  const [venue, setVenue] = useState(defaults?.venue ?? '')
+  const [city, setCity] = useState(defaults?.city ?? '')
+  const [date, setDate] = useState(defaults?.date ?? '')
+  const [selectedLabel, setSelectedLabel] = useState<string | null>(
+    defaults?.artist ? `${defaults.artist}${defaults.venue ? ` at ${defaults.venue}` : ''}` : null
+  )
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) setPreview(URL.createObjectURL(file))
@@ -35,11 +44,36 @@ export function ShowForm({ defaults }: { defaults?: Defaults }) {
 
   return (
     <form action={formAction} className="space-y-5">
+      {/* Show search */}
+      <div className="space-y-2">
+        <Label>Find a show</Label>
+        <ShowSearch
+          selected={selectedLabel}
+          onSelect={(event) => {
+            // Extract artist from event name (Ticketmaster uses "Artist Name" as event name)
+            setArtist(event.name)
+            setVenue(event.venue)
+            setCity(event.city)
+            setDate(event.date)
+            setSelectedLabel(`${event.name}${event.venue ? ` at ${event.venue}` : ''}`)
+          }}
+          onClear={() => {
+            setArtist('')
+            setVenue('')
+            setCity('')
+            setDate('')
+            setSelectedLabel(null)
+          }}
+        />
+        <p className="text-xs text-muted-foreground">
+          Search Ticketmaster to auto-fill the details, or fill them in below.
+        </p>
+      </div>
+
       {/* Photo upload */}
       <div className="space-y-2">
         <Label>
-          Photo{' '}
-          <span className="text-muted-foreground font-normal">(optional)</span>
+          Photo <span className="text-muted-foreground font-normal">(optional)</span>
         </Label>
         {preview ? (
           <div className="relative rounded-xl overflow-hidden">
@@ -78,7 +112,8 @@ export function ShowForm({ defaults }: { defaults?: Defaults }) {
           id="artist"
           name="artist"
           placeholder="e.g. Radiohead"
-          defaultValue={defaults?.artist ?? ''}
+          value={artist}
+          onChange={(e) => setArtist(e.target.value)}
           maxLength={200}
           required
         />
@@ -89,7 +124,8 @@ export function ShowForm({ defaults }: { defaults?: Defaults }) {
           id="venue"
           name="venue"
           placeholder="e.g. Madison Square Garden"
-          defaultValue={defaults?.venue ?? ''}
+          value={venue}
+          onChange={(e) => setVenue(e.target.value)}
           maxLength={200}
           required
         />
@@ -101,7 +137,8 @@ export function ShowForm({ defaults }: { defaults?: Defaults }) {
             id="city"
             name="city"
             placeholder="e.g. New York, NY"
-            defaultValue={defaults?.city ?? ''}
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
             maxLength={100}
             required
           />
@@ -112,7 +149,8 @@ export function ShowForm({ defaults }: { defaults?: Defaults }) {
             id="showDate"
             name="showDate"
             type="date"
-            defaultValue={defaults?.date ?? ''}
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
             required
           />
         </div>
@@ -136,8 +174,7 @@ export function ShowForm({ defaults }: { defaults?: Defaults }) {
       </div>
       <div className="space-y-2">
         <Label htmlFor="review">
-          Review{' '}
-          <span className="text-muted-foreground font-normal">(optional)</span>
+          Review <span className="text-muted-foreground font-normal">(optional)</span>
         </Label>
         <Textarea
           id="review"

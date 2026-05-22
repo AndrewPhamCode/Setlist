@@ -31,7 +31,7 @@ export default async function GlobalFeedPage() {
     .from(shows)
     .innerJoin(profiles, eq(shows.userId, profiles.id))
     .orderBy(desc(shows.createdAt))
-    .limit(50)
+    .limit(20)
 
   const [artistImageMap, attendeeCountMap] = await Promise.all([
     getArtistImages([...new Set(allShows.filter((s) => !s.imageUrl).map((s) => s.artist))]).catch(() => new Map<string, string>()),

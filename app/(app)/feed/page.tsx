@@ -47,7 +47,7 @@ export default async function FriendsFeedPage() {
             )
           )
           .orderBy(desc(shows.createdAt))
-          .limit(50)
+          .limit(20)
       : []
 
   const [artistImageMap, attendeeCountMap] = await Promise.all([

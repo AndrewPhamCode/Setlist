@@ -14,6 +14,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Ticketmaster API key not configured' }, { status: 500 })
   }
 
+  const wide = searchParams.get('wide') === '1'
+
   const params = new URLSearchParams({
     apikey: apiKey,
     classificationName: 'music',
@@ -27,8 +29,18 @@ export async function GET(request: NextRequest) {
     params.set('radius', radius)
     params.set('unit', 'miles')
   }
-  if (startDate) params.set('startDateTime', `${startDate}T00:00:00Z`)
-  if (endDate) params.set('endDateTime', `${endDate}T23:59:59Z`)
+  if (wide) {
+    // For the log-show search: past 2 years → 1 year ahead
+    const past = new Date()
+    past.setFullYear(past.getFullYear() - 2)
+    const future = new Date()
+    future.setFullYear(future.getFullYear() + 1)
+    params.set('startDateTime', past.toISOString().split('T')[0] + 'T00:00:00Z')
+    params.set('endDateTime', future.toISOString().split('T')[0] + 'T23:59:59Z')
+  } else {
+    if (startDate) params.set('startDateTime', `${startDate}T00:00:00Z`)
+    if (endDate) params.set('endDateTime', `${endDate}T23:59:59Z`)
+  }
 
   const url = `https://app.ticketmaster.com/discovery/v2/events.json?${params}`
 
