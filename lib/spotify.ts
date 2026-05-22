@@ -43,6 +43,21 @@ export async function getArtistImage(artist: string): Promise<string | null> {
   return images[1]?.url ?? images[0]?.url ?? null
 }
 
+export async function getArtistImages(artists: string[]): Promise<Map<string, string>> {
+  const map = new Map<string, string>()
+  if (artists.length === 0) return map
+  const results = await Promise.all(
+    artists.map(async (artist) => {
+      const url = await getArtistImage(artist).catch(() => null)
+      return { artist, url }
+    })
+  )
+  for (const { artist, url } of results) {
+    if (url) map.set(artist, url)
+  }
+  return map
+}
+
 export async function getTrackUri(song: string, artist: string): Promise<string | null> {
   const token = await getToken()
   if (!token) return null

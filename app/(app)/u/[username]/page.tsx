@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ShowCard } from '@/components/show-card'
 import { FollowButton } from '@/components/follow-button'
 import { getInitials } from '@/lib/utils'
+import { getArtistImages } from '@/lib/spotify'
 
 export default async function UserProfilePage(props: {
   params: Promise<{ username: string }>
@@ -62,6 +63,9 @@ export default async function UserProfilePage(props: {
       .limit(1)
     isFollowing = !!row
   }
+
+  const missingArtists = [...new Set(userShows.filter((s) => !s.imageUrl).map((s) => s.artist))]
+  const artistImageMap = await getArtistImages(missingArtists).catch(() => new Map<string, string>())
 
   let likeCountMap = new Map<string, number>()
   let likedSet = new Set<string>()
@@ -167,7 +171,7 @@ export default async function UserProfilePage(props: {
           {userShows.map((show) => (
             <ShowCard
               key={show.id}
-              show={show}
+              show={{ ...show, imageUrl: show.imageUrl ?? artistImageMap.get(show.artist) ?? null }}
               profile={{
                 username: profile.username,
                 displayName: profile.displayName,

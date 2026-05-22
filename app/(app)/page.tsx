@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { db } from '@/lib/db'
 import { shows, profiles, likes } from '@/lib/db/schema'
 import { ShowCard } from '@/components/show-card'
+import { getArtistImages } from '@/lib/spotify'
 
 export default async function GlobalFeedPage() {
   const supabase = await createClient()
@@ -31,6 +32,10 @@ export default async function GlobalFeedPage() {
     .innerJoin(profiles, eq(shows.userId, profiles.id))
     .orderBy(desc(shows.createdAt))
     .limit(50)
+
+  // Fetch artist images for shows that don't have a stored imageUrl
+  const missingArtists = [...new Set(allShows.filter((s) => !s.imageUrl).map((s) => s.artist))]
+  const artistImageMap = await getArtistImages(missingArtists).catch(() => new Map<string, string>())
 
   let likeCountMap = new Map<string, number>()
   let likedSet = new Set<string>()
@@ -74,7 +79,7 @@ export default async function GlobalFeedPage() {
           {allShows.map((show) => (
             <ShowCard
               key={show.id}
-              show={show}
+              show={{ ...show, imageUrl: show.imageUrl ?? artistImageMap.get(show.artist) ?? null }}
               profile={{ username: show.username, displayName: show.displayName }}
               likeCount={likeCountMap.get(show.id) ?? 0}
               isLiked={likedSet.has(show.id)}
