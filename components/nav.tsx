@@ -1,5 +1,8 @@
 import Link from 'next/link'
+import { eq } from 'drizzle-orm'
 import { createClient } from '@/lib/supabase/server'
+import { db } from '@/lib/db'
+import { profiles } from '@/lib/db/schema'
 import { buttonVariants } from '@/components/ui/button'
 import { LogoutButton } from '@/components/logout-button'
 
@@ -8,6 +11,16 @@ export async function Nav() {
   const {
     data: { user },
   } = await supabase.auth.getUser()
+
+  let username: string | null = null
+  if (user) {
+    const [profile] = await db
+      .select({ username: profiles.username })
+      .from(profiles)
+      .where(eq(profiles.id, user.id))
+      .limit(1)
+    username = profile?.username ?? null
+  }
 
   return (
     <nav className="border-b border-border bg-background sticky top-0 z-10">
@@ -36,6 +49,14 @@ export async function Nav() {
               >
                 Log show
               </Link>
+              {username && (
+                <Link
+                  href={`/u/${username}`}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Profile
+                </Link>
+              )}
               <LogoutButton />
             </>
           ) : (

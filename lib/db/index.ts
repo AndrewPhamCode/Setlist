@@ -2,6 +2,20 @@ import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 import * as schema from './schema'
 
-// prepare: false is required for Supabase's PgBouncer in transaction mode
-const client = postgres(process.env.DATABASE_URL!, { prepare: false })
-export const db = drizzle(client, { schema })
+// Lazy singleton — avoids connection at module load time (safe for builds)
+let _db: ReturnType<typeof drizzle> | null = null
+
+export function getDb() {
+  if (!_db) {
+    const client = postgres(process.env.DATABASE_URL!, { prepare: false })
+    _db = drizzle(client, { schema })
+  }
+  return _db
+}
+
+// Convenience alias — most callers use this
+export const db = new Proxy({} as ReturnType<typeof drizzle>, {
+  get(_, prop) {
+    return getDb()[prop as keyof ReturnType<typeof drizzle>]
+  },
+})
