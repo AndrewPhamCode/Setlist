@@ -30,13 +30,12 @@ export async function GET(request: NextRequest) {
     params.set('unit', 'miles')
   }
   if (wide) {
-    // For the log-show search: past 2 years → 1 year ahead
+    // For the log-show search: past 2 years up to today only
     const past = new Date()
     past.setFullYear(past.getFullYear() - 2)
-    const future = new Date()
-    future.setFullYear(future.getFullYear() + 1)
+    const today = new Date()
     params.set('startDateTime', past.toISOString().split('T')[0] + 'T00:00:00Z')
-    params.set('endDateTime', future.toISOString().split('T')[0] + 'T23:59:59Z')
+    params.set('endDateTime', today.toISOString().split('T')[0] + 'T23:59:59Z')
   } else {
     if (startDate) params.set('startDateTime', `${startDate}T00:00:00Z`)
     if (endDate) params.set('endDateTime', `${endDate}T23:59:59Z`)

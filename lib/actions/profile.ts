@@ -7,6 +7,9 @@ import { eq } from 'drizzle-orm'
 import { createClient } from '@/lib/supabase/server'
 import { db } from '@/lib/db'
 import { profiles } from '@/lib/db/schema'
+import { getTrackUri } from '@/lib/spotify'
+
+export type FavoriteSong = { song: string; artist: string; trackUri: string | null }
 
 const onboardingSchema = z.object({
   username: z
@@ -102,4 +105,51 @@ export async function updateProfile(
   if (profile?.username) revalidatePath(`/u/${profile.username}`)
 
   redirect(profile?.username ? `/u/${profile.username}` : '/')
+}
+
+function parseFavoriteSongs(raw: string | null): FavoriteSong[] {
+  if (!raw) return []
+  try { return JSON.parse(raw) } catch { return [] }
+}
+
+export async function addFavoriteSong(
+  _prev: ProfileState,
+  formData: FormData
+): Promise<ProfileState> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const song = (formData.get('song') as string)?.trim()
+  const artist = (formData.get('artist') as string)?.trim()
+  if (!song || !artist) return { error: 'Song and artist are required' }
+
+  const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id)).limit(1)
+  const existing = parseFavoriteSongs(profile?.favoriteSongs ?? null)
+  if (existing.length >= 6) return { error: 'Maximum 6 favorite songs' }
+  if (existing.some((s) => s.song.toLowerCase() === song.toLowerCase() && s.artist.toLowerCase() === artist.toLowerCase())) {
+    return { error: 'Already in your favorites' }
+  }
+
+  const trackUri = await getTrackUri(song, artist).catch(() => null)
+  const updated = [...existing, { song, artist, trackUri }]
+
+  await db.update(profiles).set({ favoriteSongs: JSON.stringify(updated) }).where(eq(profiles.id, user.id))
+  if (profile?.username) revalidatePath(`/u/${profile.username}`)
+  revalidatePath('/settings')
+  return { error: null }
+}
+
+export async function removeFavoriteSong(index: number): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+
+  const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id)).limit(1)
+  const existing = parseFavoriteSongs(profile?.favoriteSongs ?? null)
+  existing.splice(index, 1)
+
+  await db.update(profiles).set({ favoriteSongs: JSON.stringify(existing) }).where(eq(profiles.id, user.id))
+  if (profile?.username) revalidatePath(`/u/${profile.username}`)
+  revalidatePath('/settings')
 }

@@ -8,8 +8,10 @@ import { profiles, shows, follows, likes } from '@/lib/db/schema'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ShowCard } from '@/components/show-card'
 import { FollowButton } from '@/components/follow-button'
-import { getInitials } from '@/lib/utils'
+import { SpotifyTrack } from '@/components/spotify-track'
+import { getInitials, artistHue } from '@/lib/utils'
 import { getArtistImages } from '@/lib/spotify'
+import type { FavoriteSong } from '@/lib/actions/profile'
 
 export default async function UserProfilePage(props: {
   params: Promise<{ username: string }>
@@ -152,6 +154,27 @@ export default async function UserProfilePage(props: {
           </div>
         </div>
       </div>
+
+      {/* Favorite Songs */}
+      {(() => {
+        let favSongs: FavoriteSong[] = []
+        try { favSongs = JSON.parse(profile.favoriteSongs ?? '[]') } catch {}
+        if (favSongs.length === 0) return null
+        const hue = artistHue(username)
+        return (
+          <section className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-1 h-6 rounded-full shrink-0" style={{ background: 'linear-gradient(180deg, oklch(0.72 0.26 290), oklch(0.60 0.28 315))' }} />
+              <h2 className="text-lg font-black tracking-tight">Favorite Songs</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {favSongs.map((s, i) => (
+                <SpotifyTrack key={i} song={s.song} trackUri={s.trackUri} hue={hue} artist={s.artist} />
+              ))}
+            </div>
+          </section>
+        )
+      })()}
 
       {/* Shows */}
       {userShows.length === 0 ? (

@@ -15,9 +15,11 @@ type Props = {
   song: string
   trackUri: string | null
   hue: number
+  artist?: string
+  compact?: boolean
 }
 
-export function SpotifyTrack({ song, trackUri, hue }: Props) {
+export function SpotifyTrack({ song, trackUri, hue, artist, compact }: Props) {
   const [open, setOpen] = useState(false)
   const trackId = trackUri?.split(':')[2] ?? null // "spotify:track:{id}"
 
@@ -34,7 +36,10 @@ export function SpotifyTrack({ song, trackUri, hue }: Props) {
         }}
       >
         <Music className="size-3.5 shrink-0 opacity-80" />
-        <span className="flex-1 truncate text-left">{song}</span>
+        <span className="flex-1 truncate text-left">
+          {song}
+          {artist && <span className="opacity-60 font-normal"> · {artist}</span>}
+        </span>
         {trackId ? (
           <span className="flex items-center gap-1.5 shrink-0">
             <SpotifyLogo className="size-3.5 text-[#1DB954]" />

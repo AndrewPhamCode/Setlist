@@ -15,6 +15,7 @@ export const profiles = pgTable('profiles', {
   username: varchar('username', { length: 30 }).unique(),
   displayName: varchar('display_name', { length: 50 }),
   bio: text('bio'),
+  favoriteSongs: text('favorite_songs'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })
 

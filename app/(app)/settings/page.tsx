@@ -4,8 +4,10 @@ import { createClient } from '@/lib/supabase/server'
 import { db } from '@/lib/db'
 import { profiles } from '@/lib/db/schema'
 import { EditProfileForm } from '@/components/edit-profile-form'
+import { FavoriteSongsEditor } from '@/components/favorite-songs-editor'
 import { Separator } from '@/components/ui/separator'
 import { LogoutButton } from '@/components/logout-button'
+import type { FavoriteSong } from '@/lib/actions/profile'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -36,6 +38,18 @@ export default async function SettingsPage() {
         <EditProfileForm
           defaultDisplayName={profile.displayName}
           defaultBio={profile.bio}
+        />
+      </section>
+
+      <Separator />
+
+      <section className="space-y-4">
+        <h2 className="text-base font-semibold">Favorite Songs</h2>
+        <FavoriteSongsEditor
+          songs={(() => {
+            try { return JSON.parse(profile.favoriteSongs ?? '[]') as FavoriteSong[] }
+            catch { return [] }
+          })()}
         />
       </section>
 
