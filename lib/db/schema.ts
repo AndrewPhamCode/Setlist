@@ -48,6 +48,20 @@ export const follows = pgTable(
   (table) => [primaryKey({ columns: [table.followerId, table.followingId] })]
 )
 
+export const likes = pgTable(
+  'likes',
+  {
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    showId: uuid('show_id')
+      .notNull()
+      .references(() => shows.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.showId] })]
+)
+
 // Inferred types used throughout the app
 export type Profile = typeof profiles.$inferSelect
 export type Show = typeof shows.$inferSelect

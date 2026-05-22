@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Music2, Compass, Rss, PlusCircle, Search, Settings } from 'lucide-react'
 import { eq } from 'drizzle-orm'
 import { createClient } from '@/lib/supabase/server'
 import { db } from '@/lib/db'
@@ -23,38 +24,54 @@ export async function Nav() {
   }
 
   return (
-    <nav className="border-b border-border bg-background sticky top-0 z-10">
-      <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
-        <Link href="/" className="font-bold text-base tracking-tight">
-          setlist
+    <nav className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-10">
+      <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+        <Link
+          href="/"
+          className="flex items-center gap-2 font-bold text-base tracking-tight shrink-0"
+        >
+          <Music2 className="size-5 text-primary" />
+          <span>setlist</span>
         </Link>
-        <div className="flex items-center gap-5">
+
+        <div className="flex items-center gap-1 sm:gap-3">
           {user ? (
             <>
               <Link
                 href="/"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent"
               >
-                Discover
+                <Compass className="size-4" />
+                <span className="hidden sm:inline">Discover</span>
               </Link>
               <Link
                 href="/feed"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent"
               >
-                Following
+                <Rss className="size-4" />
+                <span className="hidden sm:inline">Following</span>
+              </Link>
+              <Link
+                href="/search"
+                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent"
+              >
+                <Search className="size-4" />
+                <span className="hidden sm:inline">Search</span>
               </Link>
               <Link
                 href="/shows/new"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent"
               >
-                Log show
+                <PlusCircle className="size-4" />
+                <span className="hidden sm:inline">Log show</span>
               </Link>
               {username && (
                 <Link
-                  href={`/u/${username}`}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  href="/settings"
+                  className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent"
                 >
-                  Profile
+                  <Settings className="size-4" />
+                  <span className="hidden sm:inline">Settings</span>
                 </Link>
               )}
               <LogoutButton />
@@ -62,8 +79,15 @@ export async function Nav() {
           ) : (
             <>
               <Link
+                href="/search"
+                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent"
+              >
+                <Search className="size-4" />
+                <span className="hidden sm:inline">Search</span>
+              </Link>
+              <Link
                 href="/login"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
               >
                 Log in
               </Link>

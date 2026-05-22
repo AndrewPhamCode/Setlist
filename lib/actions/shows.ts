@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { createClient } from '@/lib/supabase/server'
 import { db } from '@/lib/db'
 import { shows, profiles } from '@/lib/db/schema'
@@ -29,19 +29,15 @@ export async function logShow(
   } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const raw = {
+  const parsed = showSchema.safeParse({
     artist: formData.get('artist'),
     venue: formData.get('venue'),
     city: formData.get('city'),
     showDate: formData.get('showDate'),
     rating: formData.get('rating'),
     review: formData.get('review') || undefined,
-  }
-
-  const parsed = showSchema.safeParse(raw)
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0].message }
-  }
+  })
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
 
   await db.insert(shows).values({ userId: user.id, ...parsed.data })
 
@@ -53,6 +49,67 @@ export async function logShow(
     .from(profiles)
     .where(eq(profiles.id, user.id))
     .limit(1)
+
+  redirect(profile?.username ? `/u/${profile.username}` : '/')
+}
+
+export async function editShow(
+  showId: string,
+  _prev: ShowState,
+  formData: FormData
+): Promise<ShowState> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const parsed = showSchema.safeParse({
+    artist: formData.get('artist'),
+    venue: formData.get('venue'),
+    city: formData.get('city'),
+    showDate: formData.get('showDate'),
+    rating: formData.get('rating'),
+    review: formData.get('review') || undefined,
+  })
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+
+  await db
+    .update(shows)
+    .set(parsed.data)
+    .where(and(eq(shows.id, showId), eq(shows.userId, user.id)))
+
+  revalidatePath('/')
+  revalidatePath('/feed')
+
+  const [profile] = await db
+    .select({ username: profiles.username })
+    .from(profiles)
+    .where(eq(profiles.id, user.id))
+    .limit(1)
+
+  redirect(profile?.username ? `/u/${profile.username}` : '/')
+}
+
+export async function deleteShow(showId: string) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return
+
+  const [profile] = await db
+    .select({ username: profiles.username })
+    .from(profiles)
+    .where(eq(profiles.id, user.id))
+    .limit(1)
+
+  await db
+    .delete(shows)
+    .where(and(eq(shows.id, showId), eq(shows.userId, user.id)))
+
+  revalidatePath('/')
+  revalidatePath('/feed')
 
   redirect(profile?.username ? `/u/${profile.username}` : '/')
 }

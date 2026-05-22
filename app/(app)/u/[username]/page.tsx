@@ -1,8 +1,10 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { and, count, desc, eq } from 'drizzle-orm'
+import { and, count, desc, eq, inArray } from 'drizzle-orm'
+import { Settings } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { db } from '@/lib/db'
-import { profiles, shows, follows } from '@/lib/db/schema'
+import { profiles, shows, follows, likes } from '@/lib/db/schema'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ShowCard } from '@/components/show-card'
 import { FollowButton } from '@/components/follow-button'
@@ -61,12 +63,37 @@ export default async function UserProfilePage(props: {
     isFollowing = !!row
   }
 
+  let likeCountMap = new Map<string, number>()
+  let likedSet = new Set<string>()
+
+  if (userShows.length > 0) {
+    const showIds = userShows.map((s) => s.id)
+
+    const likeCounts = await db
+      .select({ showId: likes.showId, count: count() })
+      .from(likes)
+      .where(inArray(likes.showId, showIds))
+      .groupBy(likes.showId)
+    likeCountMap = new Map(likeCounts.map((l) => [l.showId, l.count]))
+
+    if (user) {
+      const userLikes = await db
+        .select({ showId: likes.showId })
+        .from(likes)
+        .where(inArray(likes.showId, showIds))
+      likedSet = new Set(userLikes.map((l) => l.showId))
+    }
+  }
+
   return (
     <div className="space-y-8">
+      {/* Profile header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-4">
-          <Avatar size="lg" className="mt-1">
-            <AvatarFallback>{getInitials(profile.displayName)}</AvatarFallback>
+          <Avatar size="lg" className="mt-1 ring-2 ring-primary/20">
+            <AvatarFallback className="text-lg font-bold">
+              {getInitials(profile.displayName)}
+            </AvatarFallback>
           </Avatar>
           <div>
             <h1 className="text-xl font-bold leading-snug">
@@ -74,36 +101,62 @@ export default async function UserProfilePage(props: {
             </h1>
             <p className="text-muted-foreground text-sm">@{profile.username}</p>
             {profile.bio && (
-              <p className="text-sm mt-1 max-w-sm">{profile.bio}</p>
+              <p className="text-sm mt-1.5 max-w-sm text-muted-foreground leading-relaxed">
+                {profile.bio}
+              </p>
             )}
-            <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
+            <div className="flex gap-5 mt-3 text-sm">
               <span>
-                <strong className="text-foreground">{userShows.length}</strong>{' '}
-                shows
+                <strong className="text-foreground font-semibold">
+                  {userShows.length}
+                </strong>{' '}
+                <span className="text-muted-foreground">shows</span>
               </span>
               <span>
-                <strong className="text-foreground">{followerCount}</strong>{' '}
-                followers
+                <strong className="text-foreground font-semibold">
+                  {followerCount}
+                </strong>{' '}
+                <span className="text-muted-foreground">followers</span>
               </span>
               <span>
-                <strong className="text-foreground">{followingCount}</strong>{' '}
-                following
+                <strong className="text-foreground font-semibold">
+                  {followingCount}
+                </strong>{' '}
+                <span className="text-muted-foreground">following</span>
               </span>
             </div>
           </div>
         </div>
-        {!isOwnProfile && user && (
-          <FollowButton followingId={profile.id} isFollowing={isFollowing} />
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          {isOwnProfile && (
+            <Link
+              href="/settings"
+              className="text-muted-foreground hover:text-foreground transition-colors p-2 rounded-md hover:bg-accent"
+            >
+              <Settings className="size-4" />
+            </Link>
+          )}
+          {!isOwnProfile && user && (
+            <FollowButton followingId={profile.id} isFollowing={isFollowing} />
+          )}
+        </div>
       </div>
 
+      {/* Shows */}
       <div className="space-y-4">
         {userShows.length === 0 ? (
-          <p className="text-muted-foreground text-sm">
-            {isOwnProfile
-              ? "You haven't logged any shows yet."
-              : 'No shows logged yet.'}
-          </p>
+          <div className="text-center py-12 space-y-2">
+            <p className="text-muted-foreground text-sm">
+              {isOwnProfile
+                ? "You haven't logged any shows yet."
+                : 'No shows logged yet.'}
+            </p>
+            {isOwnProfile && (
+              <Link href="/shows/new" className="text-sm text-primary hover:underline">
+                Log your first show →
+              </Link>
+            )}
+          </div>
         ) : (
           userShows.map((show) => (
             <ShowCard
@@ -113,6 +166,9 @@ export default async function UserProfilePage(props: {
                 username: profile.username,
                 displayName: profile.displayName,
               }}
+              likeCount={likeCountMap.get(show.id) ?? 0}
+              isLiked={likedSet.has(show.id)}
+              currentUserId={user?.id ?? null}
             />
           ))
         )}
