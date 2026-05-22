@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { count, desc, eq, inArray } from 'drizzle-orm'
 import { createClient } from '@/lib/supabase/server'
-import { db } from '@/lib/db'
+import { db, getAttendeeCounts } from '@/lib/db'
 import { shows, profiles, follows, likes } from '@/lib/db/schema'
 import { ShowCard } from '@/components/show-card'
 import { getArtistImages } from '@/lib/spotify'
@@ -50,9 +50,10 @@ export default async function FriendsFeedPage() {
           .limit(50)
       : []
 
-  // Fetch artist images for shows that don't have a stored imageUrl
-  const missingArtists = [...new Set(friendShows.filter((s) => !s.imageUrl).map((s) => s.artist))]
-  const artistImageMap = await getArtistImages(missingArtists).catch(() => new Map<string, string>())
+  const [artistImageMap, attendeeCountMap] = await Promise.all([
+    getArtistImages([...new Set(friendShows.filter((s) => !s.imageUrl).map((s) => s.artist))]).catch(() => new Map<string, string>()),
+    getAttendeeCounts(friendShows),
+  ])
 
   let likeCountMap = new Map<string, number>()
   let likedSet = new Set<string>()
@@ -111,6 +112,7 @@ export default async function FriendsFeedPage() {
               likeCount={likeCountMap.get(show.id) ?? 0}
               isLiked={likedSet.has(show.id)}
               currentUserId={user.id}
+              attendeeCount={attendeeCountMap.get(show.id) ?? 0}
             />
           ))}
         </div>

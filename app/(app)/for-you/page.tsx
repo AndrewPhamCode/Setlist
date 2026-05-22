@@ -8,13 +8,7 @@ import { db } from '@/lib/db'
 import { shows } from '@/lib/db/schema'
 import { getArtistImage } from '@/lib/spotify'
 import { getUpcomingShowsForArtist } from '@/lib/ticketmaster'
-import { formatDate } from '@/lib/utils'
-
-function artistHue(artist: string): number {
-  let h = 0
-  for (let i = 0; i < artist.length; i++) h = (h * 31 + artist.charCodeAt(i)) | 0
-  return ((h % 360) + 360) % 360
-}
+import { formatDate, artistHue } from '@/lib/utils'
 
 export default async function ForYouPage() {
   const supabase = await createClient()

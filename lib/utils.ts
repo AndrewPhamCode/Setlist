@@ -14,6 +14,12 @@ export function formatDate(dateStr: string): string {
   })
 }
 
+export function artistHue(artist: string): number {
+  let h = 0
+  for (let i = 0; i < artist.length; i++) h = (h * 31 + artist.charCodeAt(i)) | 0
+  return ((h % 360) + 360) % 360
+}
+
 export function getInitials(name: string | null | undefined): string {
   if (!name) return '?'
   return name

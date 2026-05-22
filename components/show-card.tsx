@@ -6,13 +6,7 @@ import { StarDisplay } from '@/components/star-rating'
 import { LikeButton, LikeDisplay } from '@/components/like-button'
 import { ShowActions } from '@/components/show-actions'
 import { SpotifyTrack } from '@/components/spotify-track'
-import { formatDate, getInitials } from '@/lib/utils'
-
-function artistHue(artist: string): number {
-  let h = 0
-  for (let i = 0; i < artist.length; i++) h = (h * 31 + artist.charCodeAt(i)) | 0
-  return ((h % 360) + 360) % 360
-}
+import { formatDate, getInitials, artistHue } from '@/lib/utils'
 
 type ShowCardProps = {
   show: {
@@ -36,6 +30,7 @@ type ShowCardProps = {
   likeCount: number
   isLiked: boolean
   currentUserId: string | null
+  attendeeCount?: number
 }
 
 export function ShowCard({
@@ -44,6 +39,7 @@ export function ShowCard({
   likeCount,
   isLiked,
   currentUserId,
+  attendeeCount = 0,
 }: ShowCardProps) {
   const isOwner = currentUserId === show.userId
   const hue = artistHue(show.artist)
@@ -68,9 +64,9 @@ export function ShowCard({
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-4">
-            <p className="font-black text-2xl text-white tracking-tight leading-tight drop-shadow-md">
+            <Link href={`/shows/${show.id}`} className="font-black text-2xl text-white tracking-tight leading-tight drop-shadow-md hover:underline underline-offset-2">
               {show.artist}
-            </p>
+            </Link>
             <div className="mt-1.5">
               <StarDisplay rating={show.rating} />
             </div>
@@ -100,9 +96,9 @@ export function ShowCard({
           <div className="absolute bottom-0 left-0 right-0 h-14 bg-gradient-to-t from-card to-transparent" />
           {/* Artist name overlapping the gradient */}
           <div className="absolute bottom-2 left-4 right-4 z-10">
-            <p className="font-black text-2xl tracking-tight leading-tight drop-shadow-lg">
+            <Link href={`/shows/${show.id}`} className="font-black text-2xl tracking-tight leading-tight drop-shadow-lg hover:underline underline-offset-2">
               {show.artist}
-            </p>
+            </Link>
           </div>
         </div>
       )}
@@ -180,6 +176,15 @@ export function ShowCard({
             )}
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
+            {attendeeCount > 0 && (
+              <Link
+                href={`/shows/${show.id}`}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-lg hover:bg-white/[0.05]"
+              >
+                <span style={{ color: `oklch(0.65 0.18 ${hue})` }}>●</span>
+                {attendeeCount} other{attendeeCount !== 1 ? 's' : ''} were there
+              </Link>
+            )}
             {currentUserId ? (
               <LikeButton showId={show.id} likeCount={likeCount} isLiked={isLiked} />
             ) : (

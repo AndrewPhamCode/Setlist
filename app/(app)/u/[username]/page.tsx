@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { and, count, desc, eq, inArray } from 'drizzle-orm'
 import { Settings } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
-import { db } from '@/lib/db'
+import { db, getAttendeeCounts } from '@/lib/db'
 import { profiles, shows, follows, likes } from '@/lib/db/schema'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ShowCard } from '@/components/show-card'
@@ -64,8 +64,10 @@ export default async function UserProfilePage(props: {
     isFollowing = !!row
   }
 
-  const missingArtists = [...new Set(userShows.filter((s) => !s.imageUrl).map((s) => s.artist))]
-  const artistImageMap = await getArtistImages(missingArtists).catch(() => new Map<string, string>())
+  const [artistImageMap, attendeeCountMap] = await Promise.all([
+    getArtistImages([...new Set(userShows.filter((s) => !s.imageUrl).map((s) => s.artist))]).catch(() => new Map<string, string>()),
+    getAttendeeCounts(userShows),
+  ])
 
   let likeCountMap = new Map<string, number>()
   let likedSet = new Set<string>()
@@ -179,6 +181,7 @@ export default async function UserProfilePage(props: {
               likeCount={likeCountMap.get(show.id) ?? 0}
               isLiked={likedSet.has(show.id)}
               currentUserId={user?.id ?? null}
+              attendeeCount={attendeeCountMap.get(show.id) ?? 0}
             />
           ))}
         </div>
